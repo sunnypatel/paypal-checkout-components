@@ -2,9 +2,14 @@
 
 import { memoize } from "@krakenjs/belter/src";
 
+import type { ButtonProps } from "../ui/buttons/props";
+
 import { getConnectComponent } from "./component";
 
-type MerchantProps = {||};
+type MerchantProps = {|
+  buttonProps?: ButtonProps,
+  metadata?: mixed,
+|};
 
 type ConnectComponent = (merchantProps: MerchantProps) => ConnectComponent;
 // $FlowFixMe

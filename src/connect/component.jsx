@@ -15,6 +15,8 @@ import {
 } from "@paypal/sdk-client/src";
 import { FPTI_KEY } from "@paypal/sdk-constants";
 
+import { getButtonProps } from "../shared/button-props";
+
 const MIN_MAJOR_VERSION = 3;
 const MIN_MINOR_VERSION = 97;
 const MIN_PATCH_VERSION = 3;
@@ -71,6 +73,10 @@ export const getConnectComponent = async (merchantProps = {}) => {
   const env = getEnv();
   const cspNonce = getCSPNonce();
 
+  // Extract props and get button props from either merchantProps or stored Buttons config
+  const { buttonProps: fastlaneMerchantButtonProps, metadata, ...otherProps } = merchantProps;
+  const buttonProps = fastlaneMerchantButtonProps || getButtonProps();
+
   const { collect } = loadFraudnet({
     env,
     clientMetadataID: cmid,
@@ -85,7 +91,6 @@ export const getConnectComponent = async (merchantProps = {}) => {
   });
 
   const debugEnabled = getDebug() || false;
-  const { metadata } = merchantProps;
 
   let loadResult = {};
   try {
@@ -116,18 +121,23 @@ export const getConnectComponent = async (merchantProps = {}) => {
   }
 
   try {
-    const connect = await window.braintree.connect.create({
+    const connectConfig = {
+      getButtonPropsFn: getButtonProps,
       ...loadResult.metadata, // returns a localeURL for assets
-      ...merchantProps, // AXO specific props
+      ...otherProps, // Any other props passed directly to Connect/Fastlane
+      ...(buttonProps || {}), // Spread all button props (callbacks, styles, etc.)
+      metadata, // Include metadata if provided
       platformOptions: {
         platform: "PPCP",
         userIdToken: sdkToken,
         clientId,
         fraudnet: collect,
         clientMetadataId: cmid,
-        env,
+        env: env === 'local' ? 'sandbox' : env,
       },
-    });
+    };
+
+    const connect = await window.braintree.connect.create(connectConfig);
     getLogger()
       .track({
         [FPTI_KEY.CONTEXT_TYPE]: "CMID",

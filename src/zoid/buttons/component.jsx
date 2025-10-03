@@ -72,6 +72,7 @@ import {
 } from "@paypal/sdk-constants/src";
 import { node, dom } from "@krakenjs/jsx-pragmatic/src";
 
+import { setButtonProps } from "../../shared/button-props";
 import {
   getSessionID,
   storageState,
@@ -899,6 +900,10 @@ export const getButtonsComponent: () => ButtonsComponent = memoize(() => {
             buttonSessionID: props.buttonSessionID,
             phase: "buttons-first-render",
           });
+
+          // Store button props for use by Connect/Fastlane component
+          // $FlowFixMe - props type matches ButtonProps
+          setButtonProps(props);
 
           return (...args) => {
             return value(...args);
